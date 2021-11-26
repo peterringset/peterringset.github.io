@@ -24,7 +24,7 @@
 body {
     background: #fff;
     color: var(--text);
-    font-family: Helvetica, Arial;
+    font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial;
     text-align: center;
 }
 
@@ -88,6 +88,7 @@ h3 {
 
 p {
     margin-bottom: 16px;
+    line-height: 1.4;
 }
 
 a {
