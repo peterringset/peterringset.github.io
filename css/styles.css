@@ -68,7 +68,8 @@ nav li {
 }
 
 nav li a.selected {
-    text-decoration: underline;
+    color: var(--primary)
+/*    text-decoration: underline;*/
 }
 
 h1 {
