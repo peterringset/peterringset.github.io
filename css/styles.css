@@ -1,9 +1,10 @@
 :root {
     --primary: #FF8100;
-    --dimBackground: #F5F5F0;
+    --dimBackground: #F5F5F2;
     --text: #323232;
     --secondaryText: #8A8A8E;
 
+    --codeInline: var(--codeKeyword);
     --codeKeyword: #AD3DA4;
     --codeType: #3900A0;
     --codeCall: #6C36A9;
@@ -13,6 +14,24 @@
     --codeComment: #5D6C79;
     --codeDotAccess: #000000;
     --codePreprocessing: #63381F;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --dimBackground: #333333;
+        --text: #DDDDDD;
+        --secondaryText: #9B9B9B;
+        
+        --codeKeyword: #FC5FA3;
+        --codeType: #D0A8FF;
+        --codeCall: #A167E6;
+        --codeProperty: #67B7A4;
+        --codeNumber: #D0BF69;
+        --codeString: #FC6A5D;
+        --codeComment: #6C7986;
+        --codeDotAccess: #DDDDDD;
+        --codePreprocessing: #63381F;
+    }
 }
 
 * {
@@ -28,12 +47,24 @@ body {
     text-align: center;
 }
 
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #222;
+    }
+}
+
 .wrapper {
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
     padding: 40px;
     text-align: left;
+}
+
+@media(max-width: 600px) {
+    .wrapper {
+        padding: 40px 20px;
+    }
 }
 
 header .wrapper {
@@ -75,10 +106,10 @@ nav li a.selected {
 h1 {
     margin-bottom: 24px;
     font-size: 2em;
+    font-weight: 600;
 }
 
 h2 {
-
     margin: 20px 0;
 }
 
@@ -204,33 +235,9 @@ footer {
     color: var(--secondaryText);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --primary: #FF8100;
-        --dimBackground: #333333;
-        --text: #DDDDDD;
-        --secondaryText: #9B9B9B;
-        
-        --codeKeyword: #FC5FA3;
-        --codeType: #D0A8FF;
-        --codeCall: #A167E6;
-        --codeProperty: #67B7A4;
-        --codeNumber: #D0BF69;
-        --codeString: #FC6A5D;
-        --codeComment: #6C7986;
-        --codeDotAccess: #DDDDDD;
-        --codePreprocessing: #63381F;
-    }
-    
-    body {
-        background-color: #222;
-    }
-}
-
-@media(max-width: 600px) {
-    .wrapper {
-        padding: 40px 20px;
-    }
+code {
+    font-family: -ui-monospace, monospace;
+    color: var(--codeInline);
 }
 
 pre {
@@ -241,7 +248,7 @@ pre {
 }
 
 pre code {
-    font-family: monospace;
+    font-family: -ui-monospace, monospace;
     display: block;
     padding: 0 20px;
     color: var(--text);
