@@ -2,7 +2,7 @@
     --primary: #FF8100;
     --dimBackground: #F5F5F2;
     --text: #323232;
-    --secondaryText: #8A8A8E;
+    --secondaryText: #6A6A6E;
 
     --codeInline: var(--codeKeyword);
     --codeKeyword: #AD3DA4;
@@ -20,7 +20,7 @@
     :root {
         --dimBackground: #333333;
         --text: #DDDDDD;
-        --secondaryText: #9B9B9B;
+        --secondaryText: #ABABAB;
         
         --codeKeyword: #FC5FA3;
         --codeType: #D0A8FF;
@@ -111,6 +111,7 @@ h1 {
 
 h2 {
     margin: 20px 0;
+    font-weight: 600;
 }
 
 h3 {

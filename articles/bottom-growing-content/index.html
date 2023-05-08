@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="og:site_name" content="Peter Ringset"/><link rel="canonical" href="https://peterringset.dev/articles/bottom-growing-content"/><meta name="twitter:url" content="https://peterringset.dev/articles/bottom-growing-content"/><meta name="og:url" content="https://peterringset.dev/articles/bottom-growing-content"/><title>Bottom-growing content in SwiftUI | Peter Ringset</title><meta name="twitter:title" content="Bottom-growing content in SwiftUI | Peter Ringset"/><meta name="og:title" content="Bottom-growing content in SwiftUI | Peter Ringset"/><meta name="description" content="Explore some tips and tricks on how to make content grow from the bottom of your screen in SwiftUI"/><meta name="twitter:description" content="Explore some tips and tricks on how to make content grow from the bottom of your screen in SwiftUI"/><meta name="og:description" content="Explore some tips and tricks on how to make content grow from the bottom of your screen in SwiftUI"/><meta name="twitter:card" content="summary"/><link rel="stylesheet" href="/styles.css" type="text/css"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon"/><link rel="alternate" href="/feed.rss" type="application/rss+xml" title="Subscribe to Peter Ringset"/></head><body class="item-page"><header><div class="wrapper"><nav><a href="/" class="site-name">Peter Ringset</a><ul><li><a href="/articles" class="selected">Posts</a></li><li><a href="/about">About me</a></li></ul></nav></div></header><div class="wrapper"><article><h1>Bottom-growing content in SwiftUI</h1><p class="date">1 Aug 2022</p><ul class="tag-list"><li><a href="/tags/swiftui">SwiftUI</a></li><li><a href="/tags/ios">iOS</a></li></ul><div class="content"><ul><li>Vokse fra bunnen</li><li>- Designere ønsker det sånn</li><li>- Lettere ergonomi</li><li>- Mer tilrettelagt med nye knappestilen</li></ul><ul><li>Standard vokser fra bunn med VStack { Spacer(), Content() }</li></ul><ul><li>Liste på topp, footer-knapp for å gå videre</li></ul><ul><li>Liste som vokser fra bunn</li></ul><pre><code><span class="pre code keyword">struct</span> OtherPreview: <span class="pre code type">PreviewProvider</span> {
+    <span class="pre code keyword">static var</span> previews: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">GeometryReader</span> { geometryProxy <span class="pre code keyword">in</span>
+            <span class="pre code type">ScrollView</span> {
+                <span class="pre code type">VStack</span> {
+                    <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>)
+                        .<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+
+                    <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+
+                    <span class="pre code type">Spacer</span>()
+
+                    <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) {
+                        <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>)
+                    }
+                    .<span class="pre code call">buttonStyle</span>(.<span class="pre code dotAccess">borderedProminent</span>)
+                }
+                .<span class="pre code call">frame</span>(maxWidth: .<span class="pre code dotAccess">infinity</span>, minHeight: geometryProxy.<span class="pre code property">size</span>.<span class="pre code property">height</span>, alignment: .<span class="pre code dotAccess">top</span>)
+            }
+        }
+    }
+}
+</code></pre></div></article></div><footer><p>Generated using <a href="https://github.com/johnsundell/publish">Publish</a></p><p><a href="https://github.com/peterringset">GitHub</a><span> | </span><a href="/feed.rss">RSS</a></p></footer></body></html>
