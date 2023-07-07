@@ -89,7 +89,7 @@ nav {
 }
 
 nav ul {
-    margin-bottom: 0px;
+    margin-bottom: 1px;
     padding-left: 40px;
 }
 
@@ -137,9 +137,9 @@ h1 a, h2 a, h3 a {
 }
 
 hr {
-    border-top: 4px solid var(--secondaryText);
+    border-top: 3px solid var(--secondaryText);
     border-bottom: none;
-    margin: 16px 0px;
+    margin: 12px 0px;
 }
 
 img {
