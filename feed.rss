@@ -1,4 +1,46 @@
-<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Peter Ringset</title><description>My name is Peter, and I'm an iOS developer. On this blog I'll share some thoughts on different subjects within iOS development, and some tips and tricks around developing apps for the Apple ecosystem.</description><link>https://peterringset.dev</link><language>en</language><lastBuildDate>Wed, 9 Aug 2023 20:16:08 +0200</lastBuildDate><pubDate>Wed, 9 Aug 2023 20:16:08 +0200</pubDate><ttl>250</ttl><atom:link href="https://peterringset.dev/feed.rss" rel="self" type="application/rss+xml"/><item><guid isPermaLink="true">https://peterringset.dev/articles/column-breakpoints</guid><title>Making breakpoints work with single-line code blocks</title><description>Did you know you can make the Xcode debugger break on single line code blocks?</description><link>https://peterringset.dev/articles/column-breakpoints</link><pubDate>Tue, 7 Mar 2023 19:39:00 +0100</pubDate><content:encoded><![CDATA[<p>When writing functional code we often run into situations where there are a lot of nested function calls. In many cases we want to compact the code, so that each function call is a single line. Take for instance this example, working with a combine publisher:</p><pre><code><span class="pre code keyword">func</span> observeName() {
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Peter Ringset</title><description>My name is Peter, and I'm an iOS developer. On this blog I'll share some thoughts on different subjects within iOS development, and some tips and tricks around developing apps for the Apple ecosystem.</description><link>https://peterringset.dev</link><language>en</language><lastBuildDate>Tue, 30 Jan 2024 13:29:01 +0100</lastBuildDate><pubDate>Tue, 30 Jan 2024 13:29:01 +0100</pubDate><ttl>250</ttl><atom:link href="https://peterringset.dev/feed.rss" rel="self" type="application/rss+xml"/><item><guid isPermaLink="true">https://peterringset.dev/articles/bottom-growing-content</guid><title>Placing important UI elements near the bottom of the screen for better accessibility</title><description>Read on to see this simple trick to place a button near the bottom of a screen.</description><link>https://peterringset.dev/articles/bottom-growing-content</link><pubDate>Tue, 30 Jan 2024 12:43:00 +0100</pubDate><content:encoded><![CDATA[<p>It has been a long held platform convention for iOS apps to use the top corners for button. These buttons are usually used for saving the current state of the UI, cancelling the current flow, or something similar. As the iPhone screens have evolved in size over the years these buttons are becoming increasingly difficult to hit, and as a consequence more and more apps have started putting these types of buttons nearer to the bottom of the screen.</p><p>Consider the following view:</p><pre><code><span class="pre code keyword">struct</span> ContentView: <span class="pre code type">View</span> {
+    <span class="pre code keyword">var</span> body: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">VStack</span> {
+            <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>).<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+            <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+
+            <span class="pre code type">Spacer</span>()
+
+            <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) { <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>) }
+                .<span class="pre code call">buttonStyle</span>(.<span class="pre code dotAccess">borderedProminent</span>)
+        }
+    }
+}
+</code></pre><p>This view solves the placement of the button. The button flows to the bottom of the screen, and respects the safe area insets at the bottom, so that it is easy to hit when holding your phone with one hand. But what if the content you are showing above the button is dynamic? Then we can potentially have content that will not fit the screen.</p><p>The easiest answer here is to turn to a <code>List</code> or <code>Form</code>, and let the button be part of the scrollable content. This solves the functional need of the content, but it might not be the best looking solution.</p><pre><code><span class="pre code keyword">struct</span> ContentView: <span class="pre code type">View</span> {
+    <span class="pre code keyword">var</span> body: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">List</span> {
+            <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>).<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+            <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+            <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) { <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>) }
+        }
+    }
+}
+</code></pre><p>There is however another alternative. The button can still live at the bottom of the screen, and can still be scrollable when needed. To achieve this can use a <code>VStack</code> with a minium height, wrapped in a <code>ScrollView</code>. This allows the stack to expand to the full size of the screen when content is smaller than the screen, and expands beyond the size of the screen when the content is larger.</p><pre><code><span class="pre code keyword">struct</span> ContentView: <span class="pre code type">View</span> {
+    <span class="pre code keyword">var</span> body: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">GeometryReader</span> { geometryProxy <span class="pre code keyword">in</span>
+            <span class="pre code type">ScrollView</span> {
+                <span class="pre code type">VStack</span> {
+                    <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>).<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+                    <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+
+                    <span class="pre code type">ForEach</span>(<span class="pre code number">0</span>..&lt;<span class="pre code number">40</span>, id: \.<span class="pre code keyword">self</span>) { number <span class="pre code keyword">in</span> <span class="pre code type">Text</span>(<span class="pre code string">"Number</span> \(number)<span class="pre code string">"</span>) }
+
+                    <span class="pre code type">Spacer</span>()
+
+                    <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) { <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>) }
+                        .<span class="pre code call">buttonStyle</span>(.<span class="pre code dotAccess">borderedProminent</span>)
+                }
+                .<span class="pre code call">frame</span>(maxWidth: .<span class="pre code dotAccess">infinity</span>, minHeight: geometryProxy.<span class="pre code property">size</span>.<span class="pre code property">height</span>, alignment: .<span class="pre code dotAccess">top</span>)
+            }
+        }
+    }
+}
+</code></pre><p>This solution is also compatible with the safe area insets, and will also respect any keyboard presentation, and allow all of the content to still be visible and scrollable.</p>]]></content:encoded></item><item><guid isPermaLink="true">https://peterringset.dev/articles/column-breakpoints</guid><title>Making breakpoints work with single-line code blocks</title><description>Did you know you can make the Xcode debugger break on single line code blocks?</description><link>https://peterringset.dev/articles/column-breakpoints</link><pubDate>Tue, 7 Mar 2023 19:39:00 +0100</pubDate><content:encoded><![CDATA[<p>When writing functional code we often run into situations where there are a lot of nested function calls. In many cases we want to compact the code, so that each function call is a single line. Take for instance this example, working with a combine publisher:</p><pre><code><span class="pre code keyword">func</span> observeName() {
     service.<span class="pre code call">namePublisher</span>()
         .<span class="pre code call">map</span> { $0.<span class="pre code property">name</span> }
         .<span class="pre code call">filter</span> { $0.<span class="pre code property">name</span>.<span class="pre code call">contains</span>(<span class="pre code string">"something"</span>) }

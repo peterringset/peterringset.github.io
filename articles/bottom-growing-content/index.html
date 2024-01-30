@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="og:site_name" content="Peter Ringset"/><link rel="canonical" href="https://peterringset.dev/articles/bottom-growing-content"/><meta name="twitter:url" content="https://peterringset.dev/articles/bottom-growing-content"/><meta name="og:url" content="https://peterringset.dev/articles/bottom-growing-content"/><title>Placing important UI elements near the bottom of the screen for better accessibility | Peter Ringset</title><meta name="twitter:title" content="Placing important UI elements near the bottom of the screen for better accessibility | Peter Ringset"/><meta name="og:title" content="Placing important UI elements near the bottom of the screen for better accessibility | Peter Ringset"/><meta name="description" content="Read on to see this simple trick to place a button near the bottom of a screen."/><meta name="twitter:description" content="Read on to see this simple trick to place a button near the bottom of a screen."/><meta name="og:description" content="Read on to see this simple trick to place a button near the bottom of a screen."/><meta name="twitter:card" content="summary"/><link rel="stylesheet" href="/styles.css" type="text/css"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon"/><link rel="alternate" href="/feed.rss" type="application/rss+xml" title="Subscribe to Peter Ringset"/></head><body class="item-page"><header><div class="wrapper"><nav><a href="/" class="site-name">Peter Ringset</a><ul><li><a href="/articles" class="selected">Posts</a></li><li><a href="/about">About me</a></li></ul></nav></div></header><div class="wrapper"><article><h1>Placing important UI elements near the bottom of the screen for better accessibility</h1><p class="date">Jan 30, 2024</p><ul class="tag-list"><li><a href="/tags/swiftui">SwiftUI</a></li><li><a href="/tags/ios">iOS</a></li></ul><div class="content"><p>It has been a long held platform convention for iOS apps to use the top corners for button. These buttons are usually used for saving the current state of the UI, cancelling the current flow, or something similar. As the iPhone screens have evolved in size over the years these buttons are becoming increasingly difficult to hit, and as a consequence more and more apps have started putting these types of buttons nearer to the bottom of the screen.</p><p>Consider the following view:</p><pre><code><span class="pre code keyword">struct</span> ContentView: <span class="pre code type">View</span> {
+    <span class="pre code keyword">var</span> body: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">VStack</span> {
+            <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>).<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+            <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+
+            <span class="pre code type">Spacer</span>()
+
+            <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) { <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>) }
+                .<span class="pre code call">buttonStyle</span>(.<span class="pre code dotAccess">borderedProminent</span>)
+        }
+    }
+}
+</code></pre><p>This view solves the placement of the button. The button flows to the bottom of the screen, and respects the safe area insets at the bottom, so that it is easy to hit when holding your phone with one hand. But what if the content you are showing above the button is dynamic? Then we can potentially have content that will not fit the screen.</p><p>The easiest answer here is to turn to a <code>List</code> or <code>Form</code>, and let the button be part of the scrollable content. This solves the functional need of the content, but it might not be the best looking solution.</p><pre><code><span class="pre code keyword">struct</span> ContentView: <span class="pre code type">View</span> {
+    <span class="pre code keyword">var</span> body: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">List</span> {
+            <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>).<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+            <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+            <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) { <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>) }
+        }
+    }
+}
+</code></pre><p>There is however another alternative. The button can still live at the bottom of the screen, and can still be scrollable when needed. To achieve this can use a <code>VStack</code> with a minium height, wrapped in a <code>ScrollView</code>. This allows the stack to expand to the full size of the screen when content is smaller than the screen, and expands beyond the size of the screen when the content is larger.</p><pre><code><span class="pre code keyword">struct</span> ContentView: <span class="pre code type">View</span> {
+    <span class="pre code keyword">var</span> body: <span class="pre code keyword">some</span> <span class="pre code type">View</span> {
+        <span class="pre code type">GeometryReader</span> { geometryProxy <span class="pre code keyword">in</span>
+            <span class="pre code type">ScrollView</span> {
+                <span class="pre code type">VStack</span> {
+                    <span class="pre code type">Text</span>(<span class="pre code string">"Headline text goes first"</span>).<span class="pre code call">font</span>(.<span class="pre code dotAccess">largeTitle</span>)
+                    <span class="pre code type">Text</span>(<span class="pre code string">"Some other text comes second"</span>)
+
+                    <span class="pre code type">ForEach</span>(<span class="pre code number">0</span>..&lt;<span class="pre code number">40</span>, id: \.<span class="pre code keyword">self</span>) { number <span class="pre code keyword">in</span> <span class="pre code type">Text</span>(<span class="pre code string">"Number</span> \(number)<span class="pre code string">"</span>) }
+
+                    <span class="pre code type">Spacer</span>()
+
+                    <span class="pre code type">Button</span>(<span class="pre code string">"Continue"</span>) { <span class="pre code call">print</span>(<span class="pre code string">"Continue"</span>) }
+                        .<span class="pre code call">buttonStyle</span>(.<span class="pre code dotAccess">borderedProminent</span>)
+                }
+                .<span class="pre code call">frame</span>(maxWidth: .<span class="pre code dotAccess">infinity</span>, minHeight: geometryProxy.<span class="pre code property">size</span>.<span class="pre code property">height</span>, alignment: .<span class="pre code dotAccess">top</span>)
+            }
+        }
+    }
+}
+</code></pre><p>This solution is also compatible with the safe area insets, and will also respect any keyboard presentation, and allow all of the content to still be visible and scrollable.</p></div></article></div><footer><p>Generated using <a href="https://github.com/johnsundell/publish">Publish</a></p><p><a href="https://github.com/peterringset">GitHub</a><span> | </span><a href="/feed.rss">RSS</a></p></footer></body></html>
