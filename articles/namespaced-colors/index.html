@@ -1,51 +1,134 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="og:site_name" content="Peter Ringset"/><link rel="canonical" href="https://peterringset.dev/articles/namespaced-colors"/><meta name="twitter:url" content="https://peterringset.dev/articles/namespaced-colors"/><meta name="og:url" content="https://peterringset.dev/articles/namespaced-colors"/><title>Creating namespaces for named colors in Xcode | Peter Ringset</title><meta name="twitter:title" content="Creating namespaces for named colors in Xcode | Peter Ringset"/><meta name="og:title" content="Creating namespaces for named colors in Xcode | Peter Ringset"/><meta name="description" content="Did you know that you can namespace your colors in asset catalogs?"/><meta name="twitter:description" content="Did you know that you can namespace your colors in asset catalogs?"/><meta name="og:description" content="Did you know that you can namespace your colors in asset catalogs?"/><meta name="twitter:card" content="summary"/><link rel="stylesheet" href="/styles.css" type="text/css"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon"/><link rel="alternate" href="/feed.rss" type="application/rss+xml" title="Subscribe to Peter Ringset"/></head><body class="item-page"><header><div class="wrapper"><nav><a href="/" class="site-name">Peter Ringset</a><ul><li><a href="/articles" class="selected">Posts</a></li><li><a href="/about">About me</a></li></ul></nav></div></header><div class="wrapper"><article><h1>Creating namespaces for named colors in Xcode</h1><p class="date">Nov 26, 2021</p><ul class="tag-list"><li><a href="/tags/developer-tools">Developer tools</a></li><li><a href="/tags/ios">iOS</a></li></ul><div class="content"><p>Xcode's feature for named colors has been around for a few years now. When it first was introduced it was a big improvement on the existing system for vending colors, but one of the major drawbacks that were never addressed is the problem of naming safety. The current initializer takes the name as a <code>String</code>, which leads to a couple of problems. The most obvious one is that it is prone to typos, but perhaps more importantly, it does not guarantee that the name will actually resolve to a <code>UIColor</code> instance in the future if for instance the color is renamed.</p><h2>#colorLiteral</h2><p>Xcode does have a built-in mechanism for working with color literals, namely the <code>#colorLiteral(red:green:blue:alpha:)</code> statement, but unfortunately this suffers from a major drawback. The color literal only refers to the RGBA values and not the name of the color. This means that the literal will stay unchanged if the source color changes. The color literals will also be hard to use in apps that support both dark and light modes.</p><p>This leads us to think that we need to find a better way for structuring and naming colors in apps that use named colors and asset catalogs.</p><h2>Design systems</h2><p>Another motivation for structuring and naming our color use is when working with design systems. Most designers worth their salt will have a clearly defined color palette – not only for the primary, secondary, text, and similar colors but also hairline borders, shadows, and similar. This means that there will be at least a handful of colors to work with, and structuring our color system is starting to make more and more sense.</p><h2>First stab – <code>static</code> properties</h2><p>Usually, this results in developers declaring their colors in some way, for instance as an extension on <code>UIColor</code>:</p><pre><code><span class="pre code keyword">extension</span> <span class="pre code type">UIColor</span> {
-    <span class="pre code keyword">static var</span> brandMain: <span class="pre code type">UIColor</span> { <span class="pre code type">UIColor</span>(named: <span class="pre code string">"brandMain"</span>)! }
-    <span class="pre code keyword">static var</span> brandSecondary: <span class="pre code type">UIColor</span> { <span class="pre code type">UIColor</span>(named: <span class="pre code string">"brandSecondary"</span>)! }
-}
-</code></pre><p>This solution is quite a bit better, but there is still room for improvement. The name of the color is written twice, or three times actually, if we count the name in the asset catalog as well.</p><h2>Second stab – <code>enum</code>-backed initialization</h2><p>To get ease the work of declaring things multiple times, and help implement changes and additions to our color palette we can use <code>String</code>-backed <code>enum</code>s to name our colors.</p><pre><code><span class="pre code keyword">enum</span> BrandColor: <span class="pre code type">String</span> {
-    <span class="pre code keyword">case</span> main, secondary, text
-}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="og:site_name" content="Peter Ringset">
+    <link rel="canonical" href="https://peterringset.dev/articles/namespaced-colors/">
+    <meta name="twitter:url" content="https://peterringset.dev/articles/namespaced-colors/">
+    <meta name="og:url" content="https://peterringset.dev/articles/namespaced-colors/">
+    <title>Creating namespaces for named colors in Xcode | Peter Ringset</title>
+    <meta name="twitter:title" content="Creating namespaces for named colors in Xcode | Peter Ringset">
+    <meta name="og:title" content="Creating namespaces for named colors in Xcode | Peter Ringset">
+    <meta name="description" content="Did you know that you can namespace your colors in asset catalogs?">
+    <meta name="twitter:description" content="Did you know that you can namespace your colors in asset catalogs?">
+    <meta name="og:description" content="Did you know that you can namespace your colors in asset catalogs?">
+    <meta name="twitter:card" content="summary">
+    <link rel="stylesheet" href="/styles.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="alternate" href="/feed.rss" type="application/rss+xml" title="Subscribe to Peter Ringset">
+  </head>
+  <body class="item-page">
+    <header>
+  <div class="wrapper">
+    <nav>
+      <a href="/" class="site-name">Peter Ringset</a>
+      <ul>
+        <li><a href="/articles" class="selected">Posts</a></li>
+        <li><a href="/about">About me</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
 
-<span class="pre code keyword">extension</span> <span class="pre code type">UIColor</span> {
-    <span class="pre code keyword">static func</span> brand(<span class="pre code keyword">_</span> name: <span class="pre code type">BrandColor</span>) -&gt; <span class="pre code type">UIColor</span> {
-        <span class="pre code keyword">guard let</span> color = <span class="pre code type">UIColor</span>(named: name.<span class="pre code property">rawValue</span>) <span class="pre code keyword">else</span> {
-            <span class="pre code call">fatalError</span>(<span class="pre code string">"Failed to load named color"</span>)
-        }
-        <span class="pre code keyword">return</span> color
-    }
-}
-</code></pre><p>To be even more thorough we can also use the more complicated initializer</p><pre><code><span class="pre code type">UIColor</span>(named: name.<span class="pre code property">rawValue</span>, in: <span class="pre code type">Bundle</span>(for: <span class="pre code type">PrivateClass</span>.<span class="pre code keyword">self</span>), compatibleWith: <span class="pre code keyword">nil</span>)
-</code></pre><p>with an empty class named <code>PrivateClass</code> (or any other class that belongs to the same bundle) to be able to use these colors outside of our bundle.</p><p>This leaves us with a pretty solid solution for handling colors in our app. This can be more than enough for a lot of apps. But, sometimes we can run into situations where we have a very large number of colors to handle. For instance, there could be the main palette, containing three or four colors used to color UI elements. Then there could be a second palette to handle text, maybe three or four colors there as well. Additionally, we could have a third palette for data visualizations, like cake diagrams and similar. This could add another six or seven colors. To add to this complexity, we will in many cases also run into situations where a text color is almost the same as a UI element color, only slightly darker. And this is what motivates our final improvement.</p><h2>Third stab - Namespaces</h2><p>A well-known feature in asset catalogs is to use folders to organize the assets. The folders are not actually folders though, they only help with grouping. Each asset's name still has to be unique to avoid naming collisions. But there is a more obscure feature we can also use – folders can actually provide namespaces. To enable this we'll have to select the folder in the left list and tick the <code>Provides Namespace</code> box at the top-right menu of the screen.</p><img src="/images/namespaced-colors/provides-namespace.png" alt="Asset catalog"/><p>Our color names will now be <code>main/green</code>, <code>main/purple</code>, and <code>main/red</code>, which means that we can have multiple colors named <code>red</code>, just organized into different namespaces.</p><p>To support this new feature in code we will expand on our color instantiation a bit.</p><pre><code><span class="pre code keyword">struct</span> ColorNamespace&lt;C: <span class="pre code type">RawRepresentable</span>&gt; {
-    <span class="pre code keyword">private let</span> colorType: <span class="pre code type">C</span>.<span class="pre code type">Type</span>? = <span class="pre code keyword">nil</span>
-}
+    <div class="wrapper">
+  <article>
+    <h1>Creating namespaces for named colors in Xcode</h1>
+    <p class="date">Nov 26, 2021</p>
+    
+    <ul class="tag-list">
+  
+    <li><a href="/tags/developer-tools/">Developer tools</a></li>
+  
+    <li><a href="/tags/ios/">iOS</a></li>
+  
+</ul>
 
-<span class="pre code keyword">extension</span> <span class="pre code type">UIColor</span> {
-    <span class="pre code keyword">static func</span> named&lt;C: <span class="pre code type">NamespacedColor</span>&gt;(<span class="pre code keyword">_</span> namespace: <span class="pre code type">ColorNamespace</span>&lt;<span class="pre code type">C</span>&gt;, color: <span class="pre code type">C</span>) -&gt; <span class="pre code type">UIColor</span> {
-        <span class="pre code keyword">return</span> <span class="pre code type">UIColor</span>(named: <span class="pre code string">"</span>\(<span class="pre code type">C</span>.<span class="pre code property">namespace</span>)<span class="pre code string">/</span>\(color.<span class="pre code property">rawValue</span>)<span class="pre code string">"</span>)!
-    }
-}
-</code></pre><p>Then we declare our different namespaces</p><pre><code><span class="pre code keyword">protocol</span> NamespacedColor: <span class="pre code type">RawRepresentable</span> <span class="pre code keyword">where</span> <span class="pre code type">RawValue</span> == <span class="pre code type">String</span> {
-    <span class="pre code keyword">static var</span> namespace: <span class="pre code type">String</span> { <span class="pre code keyword">get</span> }
-}
+    <div class="content">
+      <p>Xcode's feature for named colors has been around for a few years now. When it first was introduced it was a big improvement on the existing system for vending colors, but one of the major drawbacks that were never addressed is the problem of naming safety. The current initializer takes the name as a <code>String</code>, which leads to a couple of problems. The most obvious one is that it is prone to typos, but perhaps more importantly, it does not guarantee that the name will actually resolve to a <code>UIColor</code> instance in the future if for instance the color is renamed.</p>
+<h2>#colorLiteral</h2>
+<p>Xcode does have a built-in mechanism for working with color literals, namely the <code>#colorLiteral(red:green:blue:alpha:)</code> statement, but unfortunately this suffers from a major drawback. The color literal only refers to the RGBA values and not the name of the color. This means that the literal will stay unchanged if the source color changes. The color literals will also be hard to use in apps that support both dark and light modes.</p>
+<p>This leads us to think that we need to find a better way for structuring and naming colors in apps that use named colors and asset catalogs.</p>
+<h2>Design systems</h2>
+<p>Another motivation for structuring and naming our color use is when working with design systems. Most designers worth their salt will have a clearly defined color palette – not only for the primary, secondary, text, and similar colors but also hairline borders, shadows, and similar. This means that there will be at least a handful of colors to work with, and structuring our color system is starting to make more and more sense.</p>
+<h2>First stab – <code>static</code> properties</h2>
+<p>Usually, this results in developers declaring their colors in some way, for instance as an extension on <code>UIColor</code>:</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">extension</span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> brandMain<span class="token punctuation">:</span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span> <span class="token class-name">UIColor</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> <span class="token string-literal"><span class="token string">"brandMain"</span></span><span class="token punctuation">)</span><span class="token operator">!</span> <span class="token punctuation">}</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> brandSecondary<span class="token punctuation">:</span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span> <span class="token class-name">UIColor</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> <span class="token string-literal"><span class="token string">"brandSecondary"</span></span><span class="token punctuation">)</span><span class="token operator">!</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>This solution is quite a bit better, but there is still room for improvement. The name of the color is written twice, or three times actually, if we count the name in the asset catalog as well.</p>
+<h2>Second stab – <code>enum</code>-backed initialization</h2>
+<p>To get ease the work of declaring things multiple times, and help implement changes and additions to our color palette we can use <code>String</code>-backed <code>enum</code>s to name our colors.</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">enum</span> <span class="token class-name">BrandColor</span><span class="token punctuation">:</span> <span class="token class-name">String</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> main<span class="token punctuation">,</span> secondary<span class="token punctuation">,</span> text
+<span class="token punctuation">}</span>
 
-<span class="pre code keyword">enum</span> MainColors: <span class="pre code type">String</span>, <span class="pre code type">NamespacedColor</span> {
-    <span class="pre code keyword">static var</span> namespace: <span class="pre code type">String</span> { <span class="pre code string">"main"</span> }
-    <span class="pre code keyword">case</span> red, green, blue
-}
+<span class="token keyword">extension</span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">func</span> <span class="token function-definition function">brand</span><span class="token punctuation">(</span><span class="token omit keyword">_</span> name<span class="token punctuation">:</span> <span class="token class-name">BrandColor</span><span class="token punctuation">)</span> <span class="token operator">-></span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span>
+        <span class="token keyword">guard</span> <span class="token keyword">let</span> color <span class="token operator">=</span> <span class="token class-name">UIColor</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> name<span class="token punctuation">.</span>rawValue<span class="token punctuation">)</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token function">fatalError</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Failed to load named color"</span></span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> color
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>To be even more thorough we can also use the more complicated initializer</p>
+<pre class="pre"><code class="language-swift"><span class="token class-name">UIColor</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> name<span class="token punctuation">.</span>rawValue<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token class-name">Bundle</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token class-name">PrivateClass</span><span class="token punctuation">.</span><span class="token keyword">self</span><span class="token punctuation">)</span><span class="token punctuation">,</span> compatibleWith<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span></code></pre>
+<p>with an empty class named <code>PrivateClass</code> (or any other class that belongs to the same bundle) to be able to use these colors outside of our bundle.</p>
+<p>This leaves us with a pretty solid solution for handling colors in our app. This can be more than enough for a lot of apps. But, sometimes we can run into situations where we have a very large number of colors to handle. For instance, there could be the main palette, containing three or four colors used to color UI elements. Then there could be a second palette to handle text, maybe three or four colors there as well. Additionally, we could have a third palette for data visualizations, like cake diagrams and similar. This could add another six or seven colors. To add to this complexity, we will in many cases also run into situations where a text color is almost the same as a UI element color, only slightly darker. And this is what motivates our final improvement.</p>
+<h2>Third stab - Namespaces</h2>
+<p>A well-known feature in asset catalogs is to use folders to organize the assets. The folders are not actually folders though, they only help with grouping. Each asset's name still has to be unique to avoid naming collisions. But there is a more obscure feature we can also use – folders can actually provide namespaces. To enable this we'll have to select the folder in the left list and tick the <code>Provides Namespace</code> box at the top-right menu of the screen.</p>
+<p><img src="/images/namespaced-colors/provides-namespace.png" alt="Asset catalog"></p>
+<p>Our color names will now be <code>main/green</code>, <code>main/purple</code>, and <code>main/red</code>, which means that we can have multiple colors named <code>red</code>, just organized into different namespaces.</p>
+<p>To support this new feature in code we will expand on our color instantiation a bit.</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">struct</span> <span class="token class-name">ColorNamespace</span><span class="token operator">&lt;</span><span class="token class-name">C</span><span class="token punctuation">:</span> <span class="token class-name">RawRepresentable</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">let</span> colorType<span class="token punctuation">:</span> <span class="token class-name">C</span><span class="token punctuation">.</span><span class="token keyword">Type</span><span class="token operator">?</span> <span class="token operator">=</span> <span class="token nil constant">nil</span>
+<span class="token punctuation">}</span>
 
-<span class="pre code keyword">enum</span> SecondaryColors: <span class="pre code type">String</span>, <span class="pre code type">NamespacedColor</span> {
-    <span class="pre code keyword">static var</span> namespace: <span class="pre code type">String</span> { <span class="pre code string">"secondary"</span> }
-    <span class="pre code keyword">case</span> purple, yellow, orange
-}
-</code></pre><p>set up some short-hands to create namespaces</p><pre><code><span class="pre code keyword">extension</span> <span class="pre code type">ColorNamespace</span> {
-    <span class="pre code keyword">static var</span> main: <span class="pre code type">ColorNamespace</span>&lt;<span class="pre code type">MainColors</span>&gt; { <span class="pre code keyword">return</span> <span class="pre code type">ColorNamespace</span>&lt;<span class="pre code type">MainColors</span>&gt;() }
-    <span class="pre code keyword">static var</span> secondary: <span class="pre code type">ColorNamespace</span>&lt;<span class="pre code type">SecondaryColors</span>&gt; { <span class="pre code keyword">return</span> <span class="pre code type">ColorNamespace</span>&lt;<span class="pre code type">SecondaryColors</span>&gt;() }
-}
-</code></pre><p>and instantiate our colors using</p><pre><code><span class="pre code keyword">let</span> mainRed: <span class="pre code type">UIColor</span> = .<span class="pre code call">named</span>(.<span class="pre code dotAccess">main</span>, color: .<span class="pre code dotAccess">red</span>)
-<span class="pre code keyword">let</span> secondaryPurple: <span class="pre code type">UIColor</span> = .<span class="pre code call">named</span>(.<span class="pre code dotAccess">secondary</span>, color: .<span class="pre code dotAccess">purple</span>)
-</code></pre><p>This lets us declare our colors in a structured way in our asset catalogs and write very small amounts of code to let us have a compile-safe instantiation of our colors.</p><h2>Bonus round – Tests</h2><p>To add a final layer of safety we can also add tests to make sure that all our color code resolves to actual colors. To do this we will use the <code>CaseIterable</code> protocol, and make each color enum conform to it. This allows us to iterate over all cases and check that they instantiate correctly.</p><pre><code><span class="pre code keyword">func</span> testMainColors() <span class="pre code keyword">throws</span> {
-    <span class="pre code keyword">for</span> color <span class="pre code keyword">in</span> <span class="pre code type">MainColors</span>.<span class="pre code property">allCases</span> {
-        <span class="pre code call">XCTAssertNotNil</span>(<span class="pre code type">UIColor</span>.<span class="pre code call">named</span>(.<span class="pre code dotAccess">main</span>, color: color))
-    }
-}
-</code></pre></div></article></div><footer><p>Generated using <a href="https://github.com/johnsundell/publish">Publish</a></p><p><a href="https://github.com/peterringset">GitHub</a><span> | </span><a href="/feed.rss">RSS</a></p></footer></body></html>
+<span class="token keyword">extension</span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">func</span> <span class="token function-definition function">named</span><span class="token operator">&lt;</span><span class="token class-name">C</span><span class="token punctuation">:</span> <span class="token class-name">NamespacedColor</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token omit keyword">_</span> namespace<span class="token punctuation">:</span> <span class="token class-name">ColorNamespace</span><span class="token operator">&lt;</span><span class="token class-name">C</span><span class="token operator">></span><span class="token punctuation">,</span> color<span class="token punctuation">:</span> <span class="token class-name">C</span><span class="token punctuation">)</span> <span class="token operator">-></span> <span class="token class-name">UIColor</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token class-name">UIColor</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> <span class="token string-literal"><span class="token string">"</span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation"><span class="token class-name">C</span><span class="token punctuation">.</span>namespace</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">/</span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">color<span class="token punctuation">.</span>rawValue</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span><span class="token operator">!</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Then we declare our different namespaces</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">protocol</span> <span class="token class-name">NamespacedColor</span><span class="token punctuation">:</span> <span class="token class-name">RawRepresentable</span> <span class="token keyword">where</span> <span class="token class-name">RawValue</span> <span class="token operator">==</span> <span class="token class-name">String</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> namespace<span class="token punctuation">:</span> <span class="token class-name">String</span> <span class="token punctuation">{</span> <span class="token keyword">get</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">enum</span> <span class="token class-name">MainColors</span><span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token class-name">NamespacedColor</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> namespace<span class="token punctuation">:</span> <span class="token class-name">String</span> <span class="token punctuation">{</span> <span class="token string-literal"><span class="token string">"main"</span></span> <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> red<span class="token punctuation">,</span> green<span class="token punctuation">,</span> blue
+<span class="token punctuation">}</span>
+
+<span class="token keyword">enum</span> <span class="token class-name">SecondaryColors</span><span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token class-name">NamespacedColor</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> namespace<span class="token punctuation">:</span> <span class="token class-name">String</span> <span class="token punctuation">{</span> <span class="token string-literal"><span class="token string">"secondary"</span></span> <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> purple<span class="token punctuation">,</span> yellow<span class="token punctuation">,</span> orange
+<span class="token punctuation">}</span></code></pre>
+<p>set up some short-hands to create namespaces</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">extension</span> <span class="token class-name">ColorNamespace</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> main<span class="token punctuation">:</span> <span class="token class-name">ColorNamespace</span><span class="token operator">&lt;</span><span class="token class-name">MainColors</span><span class="token operator">></span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token class-name">ColorNamespace</span><span class="token operator">&lt;</span><span class="token class-name">MainColors</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+    <span class="token keyword">static</span> <span class="token keyword">var</span> secondary<span class="token punctuation">:</span> <span class="token class-name">ColorNamespace</span><span class="token operator">&lt;</span><span class="token class-name">SecondaryColors</span><span class="token operator">></span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token class-name">ColorNamespace</span><span class="token operator">&lt;</span><span class="token class-name">SecondaryColors</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>and instantiate our colors using</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">let</span> mainRed<span class="token punctuation">:</span> <span class="token class-name">UIColor</span> <span class="token operator">=</span> <span class="token punctuation">.</span><span class="token function">named</span><span class="token punctuation">(</span><span class="token punctuation">.</span>main<span class="token punctuation">,</span> color<span class="token punctuation">:</span> <span class="token punctuation">.</span>red<span class="token punctuation">)</span>
+<span class="token keyword">let</span> secondaryPurple<span class="token punctuation">:</span> <span class="token class-name">UIColor</span> <span class="token operator">=</span> <span class="token punctuation">.</span><span class="token function">named</span><span class="token punctuation">(</span><span class="token punctuation">.</span>secondary<span class="token punctuation">,</span> color<span class="token punctuation">:</span> <span class="token punctuation">.</span>purple<span class="token punctuation">)</span></code></pre>
+<p>This lets us declare our colors in a structured way in our asset catalogs and write very small amounts of code to let us have a compile-safe instantiation of our colors.</p>
+<h2>Bonus round – Tests</h2>
+<p>To add a final layer of safety we can also add tests to make sure that all our color code resolves to actual colors. To do this we will use the <code>CaseIterable</code> protocol, and make each color enum conform to it. This allows us to iterate over all cases and check that they instantiate correctly.</p>
+<pre class="pre"><code class="language-swift"><span class="token keyword">func</span> <span class="token function-definition function">testMainColors</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token punctuation">{</span>
+    <span class="token keyword">for</span> color <span class="token keyword">in</span> <span class="token class-name">MainColors</span><span class="token punctuation">.</span>allCases <span class="token punctuation">{</span>
+        <span class="token class-name">XCTAssertNotNil</span><span class="token punctuation">(</span><span class="token class-name">UIColor</span><span class="token punctuation">.</span><span class="token function">named</span><span class="token punctuation">(</span><span class="token punctuation">.</span>main<span class="token punctuation">,</span> color<span class="token punctuation">:</span> color<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+
+    </div>
+  </article>
+</div>
+
+    <footer>
+  <p>Generated using <a href="https://www.11ty.dev/">Eleventy</a></p>
+  <p><a href="https://github.com/peterringset">GitHub</a><span> | </span><a href="/feed.rss">RSS</a></p>
+</footer>
+
+  </body>
+</html>
