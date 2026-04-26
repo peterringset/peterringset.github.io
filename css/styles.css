@@ -45,6 +45,7 @@ body {
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial;
     text-align: center;
+    min-height: 100vh;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -234,6 +235,21 @@ img {
 
 footer {
     color: var(--secondaryText);
+}
+
+.home-page {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.home-content p {
+    font-size: 1.2em;
 }
 
 code {
